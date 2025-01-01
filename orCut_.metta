@@ -17,8 +17,13 @@
 
 (= (orCut $expr $poa)
     (if (== $expr $poa)
-        (let $child (cdr-atom $poa)
-            (car-atom $child)
+        (let* (
+            ($child (cdr-atom $poa))
+            ($temp (car-atom $child))
+            ($gChild (cdr-atom $temp))
+            )
+            (superpose $gChild)
+            
         )
         (collapse (let $el (superpose $expr)
             (if (isLiteral $el)
@@ -28,17 +33,19 @@
 
 
 ! (assertEqual 
-    (orCut (OR B) (OR B)) 
+    (orCut (OR (AND B)) (OR (AND B))) 
         B)
 
 ! (assertEqual 
     (orCut (OR (AND (NOT B))) (OR (AND (NOT B)))) 
-        (AND (NOT B)))
+       (NOT B))
 
  ! (assertEqual 
-     (orCut (AND A (OR (AND B (OR (NOT D))) (AND (NOT C)))) (OR (NOT D)))
-         (AND A (OR (AND B (NOT D)) (AND (NOT C)))))
+     (orCut (AND A (OR (AND B (OR (AND (NOT D) C))) (AND (NOT C)))) (OR (AND (NOT D) C)))
+         (AND A (OR (AND B (NOT D) C) (AND (NOT C)))))
 
 ! (assertEqual 
-    (orCut (AND A (OR (NOT B)) (OR (AND B (OR (NOT D))) (AND (NOT C)))) (OR (NOT B)))
+    (orCut (AND A (OR (AND (NOT B))) (OR (AND B (OR (NOT D))) (AND (NOT C)))) (OR (AND (NOT B))))
         (AND A (NOT B) (OR (AND B (OR (NOT D))) (AND (NOT C)))))
+
+;; (AND A B (OR (AND B (OR (NOT D))) (AND (NOT C))))
