@@ -13,7 +13,12 @@
             ($tail (cdr-atom $expr))
             )
             (if (and (== $node OR) (== (size-atom $tail) 1))
-                (car-atom $tail)
+                (let* (
+                    ($newTail (car-atom $tail))
+                    ($gChild (cdr-atom $newTail))
+                    )
+                    (superpose $gChild)
+                    )
                 (orCutHelper $expr)
             ))))
 
@@ -27,8 +32,14 @@
                         $el
                         (orCut $el)
                     )
-                    (if (== (size-atom (cdr-atom $el)) 1) 
-                        (subtraction (superpose $el) $node)
+                    (if (== (size-atom (cdr-atom $el)) 1)
+                        (let* (
+                            ($newTail (cdr-atom $el))
+                            ($temp (car-atom $newTail))
+                            ($gChild (cdr-atom $temp))
+                            )
+                            (superpose $gChild)
+                        )
                         (orCut $el)
                     )))))))
 
@@ -38,26 +49,27 @@
     (orCut ()) 
         ())
 
-;; POA (OR B)
+;; POA (OR (AND B))
 ! (assertEqual 
-    (orCut (OR B)) 
-        B)
+    (orCut (OR (AND B))) 
+         B)
 
 ;; POA (OR (AND (NOT B)))
 ! (assertEqual 
     (orCut (OR (AND (NOT B)))) 
-        (AND (NOT B)))
+        (NOT B))
 
-;; POA (OR (NOT D))
+;; POA (OR (AND (NOT D)))
 ! (assertEqual 
-    (orCut (AND A (OR (AND B (OR (NOT D))) (AND (NOT C)))))
+    (orCut (AND A (OR (AND B (OR (AND (NOT D)))) (AND (NOT C)))))
         (AND A (OR (AND B (NOT D)) (AND (NOT C)))))
 
+;; POA  (OR (AND B)) , as well as  (OR (AND (NOT D)))
 ! (assertEqual 
-    (orCut (AND A (OR (NOT B)) (OR (AND B (OR (NOT D))) (AND (NOT C)))))
-        (AND A (NOT B) (OR (AND B (NOT D)) (AND (NOT C)))))
+    (orCut (AND A (OR (AND B)) (OR (AND B (OR (AND (NOT D)))) (AND (NOT C)))))
+        (AND A B (OR (AND B (NOT D)) (AND (NOT C)))))
 
 ;; POA (OR (AND D))
 ! (assertEqual 
-    (orCut (AND A (OR (NOT B) (AND B (AND C (OR (AND D))))) (OR (AND B (OR (NOT D))) (AND (NOT C)))))
-        (AND A (OR (NOT B) (AND B (AND C (AND D)))) (OR (AND B (NOT D)) (AND (NOT C)))))
+    (orCut (AND A (OR (NOT B) (AND B (AND C (OR (AND D))))) (OR (AND B) (AND (NOT C)))))
+        (AND A (OR (NOT B) (AND B (AND C D))) (OR (AND B) (AND (NOT C)))))
